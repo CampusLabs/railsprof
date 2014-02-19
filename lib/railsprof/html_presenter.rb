@@ -1,0 +1,2 @@
+class Railsprof::FileSummary
+end

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= Rails.root.basename %> railsprof run</title>
+  <link href="http://clifton.is/css/normalize.css" rel="stylesheet" type="text/css">
+  <link href="http://clifton.is/css/highlight.github.css" rel="stylesheet" type="text/css">
+  <style>
+    pre {
+      overflow: auto;
+      word-wrap: normal;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+  <table>
+    <thead>
+      <tr>
+        <td width='120px'>Wall Total</td>
+        <td width='110px'>Wall Child</td>
+        <td width='110px'>Wall Excl</td>
+        <td width='90px'>CPU Total</td>
+        <td width='90px'>CPU Child</td>
+        <td width='90px'>CPU Excl</td>
+        <td>File</td>
+      </tr>
+    </thead>
+    <tbody>
+      <% @profiled_files.each do |file, *times| %>
+        <tr>
+          <% times.each do |t| %>
+            <td><%= t / 1000.0 %></td>
+          <% end %>
+          <td>
+            <a href='#' class='js-toggle-code' data-file='<%= file %>'>
+              <%= @friendly_paths[file] %>
+            </a>
+          </td>
+        </tr>
+        <tr style='display:none'>
+          <td colspan='7' style='overflow: auto'>
+            <br style='clear:both'>
+            <pre>
+              <code class="ruby"><%= @profiled_source[file] %></code>
+            </pre>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <script src='http://code.jquery.com/jquery-1.11.0.min.js'></script>
+  <script src='http://clifton.is/js/highlight.js'></script>
+  <script>
+    hljs.initHighlightingOnLoad();
+    $('.js-toggle-code').on('click', function () {
+      $(this).parents('tr').next().toggle();
+      return false;
+    });
+  </script>
+</body>
+</html>
