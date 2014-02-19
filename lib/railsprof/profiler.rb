@@ -24,7 +24,7 @@ class Railsprof::Profiler
       args.first.upcase!
       @method, @path = args
     else
-      fail ArgumentError "excepted METHOD PATH, received: #{args.join(' ')}"
+      fail ArgumentError, "excepted METHOD PATH, received: #{args.join(' ')}"
     end
 
     logger.debug "Request: #@method #@path"
@@ -99,7 +99,7 @@ class Railsprof::Profiler
     env_file = Dir.pwd + '/config/environment.rb'
     if File.exists?(env_file)
       ms = Benchmark.ms { load env_file }
-      logger.info 'App loaded in %.2f secs' % (ms / 1000.0)
+      logger.info 'Loaded in %.2f secs (%s mode)' % [ms / 1000.0, Rails.env]
     else
       puts 'Exiting... an application with config/environment.rb was expected'
       exit 1
