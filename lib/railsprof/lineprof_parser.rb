@@ -13,20 +13,28 @@ class Railsprof::LineprofParser
   #     ...
   #   ]
   # }
+  attr_reader :logger, :options
 
-  def initialize(profile, paths, threshold_ms: 0.5)
+  def initialize(profile, paths, threshold_ms: 0.5, **options)
     @threshold = threshold_ms * 1000
     @paths = paths
     @profile = profile
     @friendly_paths = {}
     @profiled_source = {}
+    @logger = options[:logger]
+    @total_ms = options[:total_ms]
+    @options = options
 
     @profiled_files = profile
       .reduce([]) do |files, (file, lines)|
         total = lines[0][0]
         if total > @threshold # && !file[/benchmark|\.rake$/] # time in micros
           @friendly_paths[file] = @paths.relative_path_for(file)
-          files << [file, *lines[0]]
+          #     [total_time, child_time, excl_time, total_cpu, child_cpu, excl_cpu],
+          tt, _ct, _et, tc, _cc, _ec = lines[0]
+          # total, cpu, idle, exclusive %
+          file_timings = [tt, tc, tt - tc].map { |n| n / 1000.0 }
+          files << [file, *file_timings]
         end
         files
       end
@@ -34,11 +42,11 @@ class Railsprof::LineprofParser
   end
 
   def cli_report
-    puts "\n-- Top files by execution time (total / child / excl / filename) --\n"
+    logger.info "\n-- total - cpu - idle - filename --\n"
 
-    @profiled_files.each do |file, total, child, excl|
-      printf "%9.2fms %9.2fms %9.2fms  %s\n" %
-        [total / 1000.0, child / 1000.0, excl / 1000.0, @friendly_paths[file]]
+    @profiled_files.each do |file, *timings|
+      str = (['%8.1fms'] * 3).join(' - ')
+      logger.info "#{str}  %s\n" % (timings + [@friendly_paths[file]])
     end
   end
 
@@ -57,6 +65,7 @@ class Railsprof::LineprofParser
     ERB.new(template, 0, "", "@html_output").result(b)
     File.open(filename, 'w') { |f| f.write(@html_output) }
 
+    logger.info "Results in '#{filename}'"
     `open #{filename}`
   end
 
@@ -66,6 +75,7 @@ class Railsprof::LineprofParser
     @profiled_source[file] = "\n % 8s   + % 8s   (called)\n" % %w(cpu idle)
     File.readlines(file).each_with_index do |line, num|
       wall, cpu, calls, _allocations = @profile[file][num + 1]
+      # excl cpu, excl idle, total cpu, total idle
       @profiled_source[file] <<
         if calls && calls > 0
           '% 8.1fms + % 8.1fms  % 8s | %s' %

@@ -16,20 +16,17 @@
   <table>
     <thead>
       <tr>
-        <td width='120px'>Wall Total</td>
-        <td width='110px'>Wall Child</td>
-        <td width='110px'>Wall Excl</td>
-        <td width='90px'>CPU Total</td>
-        <td width='90px'>CPU Child</td>
-        <td width='90px'>CPU Excl</td>
+        <td width='90px'>Total</td>
+        <td width='90px'>CPU</td>
+        <td width='90px'>Idle</td>
         <td>File</td>
       </tr>
     </thead>
     <tbody>
-      <% @profiled_files.each do |file, *times| %>
+      <% @profiled_files.each do |file, *timings| %>
         <tr>
-          <% times.each do |t| %>
-            <td><%= t / 1000.0 %></td>
+          <% timings.each do |t| %>
+            <td><%= '%.1fms' % t %></td>
           <% end %>
           <td>
             <a href='#' class='js-toggle-code' data-file='<%= file %>'>

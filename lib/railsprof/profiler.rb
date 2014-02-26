@@ -39,7 +39,7 @@ class Railsprof::Profiler
     if options[:runs] > 0
       logger.info 'Profiling....'
       
-      say_with_time('All profiles') do
+      total = say_with_time('All profiles') do
         @profile = lineprof(@paths.regexp) do
           options[:runs].times do |i|
             say_with_time("Profile ##{i + 1}") { run }
@@ -50,7 +50,10 @@ class Railsprof::Profiler
 
     parser = Railsprof::LineprofParser.new(
       @profile, @paths,
-      threshold_ms: options[:threshold]
+      threshold_ms: options[:threshold],
+      logger: logger,
+      profiler_options: @options,
+      total_ms: total
     )
 
     parser.cli_report
@@ -101,7 +104,7 @@ class Railsprof::Profiler
       ms = Benchmark.ms { load env_file }
       logger.info 'Loaded in %.2f secs (%s mode)' % [ms / 1000.0, Rails.env]
     else
-      puts 'Exiting... an application with config/environment.rb was expected'
+      logger.error 'Exiting... an application with config/environment.rb was expected'
       exit 1
     end
     @loaded = true
@@ -111,7 +114,7 @@ class Railsprof::Profiler
     ret = nil
     ms = Benchmark.ms { ret = block.call }
     logger.send(level, '%s completed in %.2fms' % [msg, ms])
-    ret
+    ms
   end
 end
 
