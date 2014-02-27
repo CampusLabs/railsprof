@@ -12,6 +12,7 @@ class Railsprof::Profiler
 
   def initialize(args, opts = {})
     @options = Railsprof::DEFAULT_OPTIONS.merge(opts)
+    @history = []
 
     @logger = options[:logger] || Railsprof::Logger.new(STDOUT)
     @logger.level = options[:log_level] || Logger::INFO
@@ -52,7 +53,12 @@ class Railsprof::Profiler
       @profile, @paths,
       threshold_ms: options[:threshold],
       logger: logger,
-      profiler_options: @options,
+      profiler_options: @options.slice(*%i[
+        gems app_paths threshold cookies params session
+      ]),
+      history: @history,
+      method: @method,
+      path: @path,
       total_ms: total
     )
 
@@ -113,7 +119,9 @@ class Railsprof::Profiler
   def say_with_time(msg, level: 'info', &block)
     ret = nil
     ms = Benchmark.ms { ret = block.call }
-    logger.send(level, '%s completed in %.2fms' % [msg, ms])
+    str = '%s completed in %.2fms' % [msg, ms]
+    logger.send(level, str)
+    @history << str
     ms
   end
 end

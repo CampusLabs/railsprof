@@ -5,6 +5,17 @@
   <link href="http://clifton.is/css/normalize.css" rel="stylesheet" type="text/css">
   <link href="http://clifton.is/css/highlight.github.css" rel="stylesheet" type="text/css">
   <style>
+    * { box-sizing: border-box; }
+    .main { margin: 0 20px 50px; }
+    [double] {
+      margin: 0 0;
+      padding: 0 0;
+      font-size: 200%;
+    }
+    pre:first {
+      padding-top: 0;
+      margin 0 0;
+    }
     pre {
       overflow: auto;
       word-wrap: normal;
@@ -13,42 +24,53 @@
   </style>
 </head>
 <body>
-  <table>
-    <thead>
-      <tr>
-        <td width='90px'>Total</td>
-        <td width='90px'>CPU</td>
-        <td width='90px'>Idle</td>
-        <td>File</td>
-      </tr>
-    </thead>
-    <tbody>
-      <% @profiled_files.each do |file, *timings| %>
+  <div class='main'>
+    <pre>
+<code double><%= @options.values_at(:method, :path).join(' ') %></code>
+<code class='ruby'>
+<%= @options[:profiler_options].map { |k, v| ":#{k.to_s.ljust(12)} #{v.inspect}" }.join("\n") %></code>
+<code>
+<%= @options[:history].join("\n") %></code>
+    </pre>
+    <table>
+      <thead>
         <tr>
-          <% timings.each do |t| %>
-            <td><%= '%.1fms' % t %></td>
-          <% end %>
-          <td>
-            <a href='#' class='js-toggle-code' data-file='<%= file %>'>
-              <%= @friendly_paths[file] %>
-            </a>
-          </td>
+          <td width='90px'>Total</td>
+          <td width='90px'>CPU</td>
+          <td width='90px'>Idle</td>
+          <td>File</td>
         </tr>
-        <tr style='display:none'>
-          <td colspan='7' style='overflow: auto'>
-            <br style='clear:both'>
-            <pre>
-              <code class="ruby"><%= @profiled_source[file] %></code>
-            </pre>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <% @profiled_files.each do |file, *timings| %>
+          <tr>
+            <% timings.each do |t| %>
+              <td><%= '%.1fms' % t %></td>
+            <% end %>
+            <td>
+              <a href='#' class='js-toggle-code' data-file='<%= file %>'>
+                <%= @friendly_paths[file] %>
+              </a>
+            </td>
+          </tr>
+          <tr style='display:none'>
+            <td colspan='7' style='overflow: auto'>
+              <br style='clear:both'>
+              <pre>
+                <code class="ruby"><%= @profiled_source[file] %></code>
+              </pre>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
   <script src='http://code.jquery.com/jquery-1.11.0.min.js'></script>
   <script src='http://clifton.is/js/highlight.js'></script>
   <script>
-    hljs.initHighlightingOnLoad();
+    $(function () {
+      $('.ruby').each(function(i, e) { hljs.highlightBlock(e, 'ruby') });
+    });
     $('.js-toggle-code').on('click', function () {
       $(this).parents('tr').next().toggle();
       return false;

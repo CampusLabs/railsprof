@@ -1,4 +1,5 @@
 require 'erb'
+require 'pp'
 
 class Railsprof::LineprofParser
   # rblineprof formatting
@@ -42,11 +43,13 @@ class Railsprof::LineprofParser
   end
 
   def cli_report
-    logger.info "\n-- total - cpu - idle - filename --\n"
+    spacing = 12
+    logger.info ''
+    logger.info(%W(total cpu idle).map { |s| s.ljust(spacing) }.join << " file")
 
     @profiled_files.each do |file, *timings|
-      str = (['%8.1fms'] * 3).join(' - ')
-      logger.info "#{str}  %s\n" % (timings + [@friendly_paths[file]])
+      str = timings.map { |t| ('%.1fms' % t).ljust(spacing) }.join
+      logger.info "#{str}  #{@friendly_paths[file]}"
     end
   end
 
@@ -65,7 +68,7 @@ class Railsprof::LineprofParser
     ERB.new(template, 0, "", "@html_output").result(b)
     File.open(filename, 'w') { |f| f.write(@html_output) }
 
-    logger.info "Results in '#{filename}'"
+    logger.info "Results in #{filename}"
     `open #{filename}`
   end
 
